@@ -21,6 +21,30 @@ export type CenterBranch =
 
 export type SupportedCurrency = 'USD' | 'LBP';
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  body: string;
+  type: 'donation' | 'student' | 'announcement' | 'financial' | 'activity' | 'system';
+  targetTab?: NavTab;
+  date: string;
+  timestamp: number;
+  unread: boolean;
+  isUrgent?: boolean;
+  senderName?: string;
+  senderRole?: string;
+  dataUrl?: string;
+}
+
+export interface PushNotificationPreferences {
+  enabled: boolean;
+  soundEnabled: boolean;
+  notifyOnDonations: boolean;
+  notifyOnStudentAlerts: boolean;
+  notifyOnAnnouncements: boolean;
+  notifyOnFinancials: boolean;
+}
+
 export interface Student {
   id: string;
   nationalId: string;
@@ -143,6 +167,7 @@ export interface Announcement {
   author: string;
   target: 'الكل' | 'أولياء الأمور' | 'الطلاب' | 'المعلمون';
   pinned?: boolean;
+  isUrgent?: boolean;
 }
 
 export interface AdminUser {
@@ -264,4 +289,5 @@ export interface DatabaseSchema {
   scheduleClasses: ScheduleClass[];
   announcements: Announcement[];
   users?: UserAccount[];
+  notifications?: NotificationItem[];
 }

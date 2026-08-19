@@ -1,0 +1,249 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "بيانات الطلاب المسجلين في مركز زاد الرحيل",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف الطالب الفريد" },
+        "nationalId": { "type": "string", "description": "الرقم القومي أو رقم الهوية" },
+        "name": { "type": "string", "description": "اسم الطالب الثلاثي أو الرباعي" },
+        "age": { "type": "string", "description": "عمر الطالب" },
+        "grade": { "type": "string", "description": "الصف الدراسي" },
+        "joinYear": { "type": "string", "description": "سنة الالتحاق" },
+        "level": { "type": "string", "description": "المستوى القرآني" },
+        "branch": { "type": "string", "description": "الفرع التابع له" },
+        "circleId": { "type": "string", "description": "معرف الحلقة" },
+        "circleNumber": { "type": "number", "description": "رقم الحلقة" },
+        "circleName": { "type": "string", "description": "اسم الحلقة القرآنية" },
+        "teacherName": { "type": "string", "description": "اسم الشيخ أو المعلم" },
+        "gender": { "type": "string", "enum": ["بنات", "صبيان", "نساء"], "description": "الفئة" },
+        "status": { "type": "string", "enum": ["منتظم", "متميز", "تأخير متكرر", "منقطع"], "description": "حالة الطالب" },
+        "phone": { "type": "string", "description": "هاتف الطالب أو ولي الأمر" },
+        "guardianName": { "type": "string", "description": "اسم ولي الأمر" },
+        "guardianPhone": { "type": "string", "description": "هاتف ولي الأمر" },
+        "notes": { "type": "string", "description": "ملاحظات إضافية" },
+        "memorizedParts": { "type": "number", "description": "عدد الأجزاء المحفوظة" }
+      },
+      "required": ["name", "status", "branch", "circleName"]
+    },
+    "AcademicCircle": {
+      "title": "AcademicCircle",
+      "description": "الحلقات القرآنية والتعليمية",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف الحلقة" },
+        "name": { "type": "string", "description": "اسم الحلقة" },
+        "circleNumber": { "type": "number", "description": "رقم الحلقة" },
+        "teacherName": { "type": "string", "description": "اسم المعلم" },
+        "level": { "type": "string", "description": "المستوى التعليمي" },
+        "branch": { "type": "string", "description": "الفرع" },
+        "studentsCount": { "type": "number", "description": "عدد الطلاب" },
+        "targetMemorization": { "type": "string", "description": "المقدار المستهدف" },
+        "room": { "type": "string", "description": "القاعة" },
+        "scheduleTime": { "type": "string", "description": "أوقات الحلقة" },
+        "targetSurah": { "type": "string", "description": "السورة المستهدفة" }
+      },
+      "required": ["name", "teacherName", "branch"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "سجل المعلمين والمشايخ",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف المعلم" },
+        "name": { "type": "string", "description": "اسم المعلم" },
+        "phone": { "type": "string", "description": "رقم الهاتف" },
+        "branch": { "type": "string", "description": "الفرع" },
+        "circleName": { "type": "string", "description": "اسم الحلقة" },
+        "partsTaught": { "type": "string", "description": "الأجزاء التي يدرسها" },
+        "active": { "type": "boolean", "description": "حالة النشاط" },
+        "joinDate": { "type": "string", "description": "تاريخ الانضمام" }
+      },
+      "required": ["name", "phone", "branch"]
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "سندات التبرعات والمساهمات المالية",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف التبرع" },
+        "donorName": { "type": "string", "description": "اسم المتبرع أو المحسن" },
+        "amountUSD": { "type": "number", "description": "المبلغ بالدولار الأمريكي" },
+        "amountLBP": { "type": "number", "description": "المبلغ بالليرة اللبنانية" },
+        "date": { "type": "string", "description": "تاريخ السند" },
+        "currency": { "type": "string", "enum": ["USD", "LBP"], "description": "العملة المقبوضة" },
+        "paymentMethod": { "type": "string", "description": "طريقة الدفع" },
+        "category": { "type": "string", "description": "وجه الصرف أو نوع التبرع" },
+        "receiptNumber": { "type": "string", "description": "رقم السند المالي" },
+        "notes": { "type": "string", "description": "ملاحظات إضافية" },
+        "collector": { "type": "string", "description": "المستلم أو أمين الصندوق" }
+      },
+      "required": ["donorName", "amountUSD", "receiptNumber", "date"]
+    },
+    "FinancialTransaction": {
+      "title": "FinancialTransaction",
+      "description": "المعاملات المالية والمصروفات والإيرادات",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف المعاملة" },
+        "type": { "type": "string", "enum": ["income", "expense"], "description": "نوع المعاملة" },
+        "category": { "type": "string", "description": "البند المالي" },
+        "amountUSD": { "type": "number", "description": "القيمة بالدولار" },
+        "amountLBP": { "type": "number", "description": "القيمة بالليرة" },
+        "date": { "type": "string", "description": "تاريخ المعاملة" },
+        "description": { "type": "string", "description": "البيان أو الوصف" },
+        "invoiceNumber": { "type": "string", "description": "رقم الفاتورة أو الإيصال" },
+        "recordedBy": { "type": "string", "description": "المسؤول عن التسجيل" }
+      },
+      "required": ["type", "category", "amountUSD", "date", "description"]
+    },
+    "ScheduleClass": {
+      "title": "ScheduleClass",
+      "description": "جدول الحصص والتوزيع الأسبوعي",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف الحصة" },
+        "day": { "type": "string", "description": "اليوم" },
+        "time": { "type": "string", "description": "الوقت" },
+        "circleName": { "type": "string", "description": "اسم الحلقة" },
+        "teacherName": { "type": "string", "description": "اسم الشيخ" },
+        "room": { "type": "string", "description": "القاعة" },
+        "studentsCount": { "type": "number", "description": "عدد الطلاب" },
+        "level": { "type": "string", "description": "المستوى" }
+      },
+      "required": ["day", "time", "circleName", "teacherName", "room"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "التعاميم والإعلانات الإدارية",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف التعميم" },
+        "title": { "type": "string", "description": "عنوان التعميم" },
+        "content": { "type": "string", "description": "نص التعميم" },
+        "dateHijri": { "type": "string", "description": "التاريخ الهجري" },
+        "dateGregorian": { "type": "string", "description": "التاريخ الميلادي" },
+        "targetAudience": { "type": "string", "description": "الفئة المستهدفة" },
+        "isUrgent": { "type": "boolean", "description": "هل هو عاجل وهام" },
+        "author": { "type": "string", "description": "جهة الإصدار أو المسؤول" }
+      },
+      "required": ["title", "content", "dateGregorian"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "الأنشطة والمسابقات والفعاليات",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف النشاط" },
+        "title": { "type": "string", "description": "عنوان الفعالية أو النشاط" },
+        "date": { "type": "string", "description": "تاريخ الفعالية" },
+        "location": { "type": "string", "description": "المكان" },
+        "organizer": { "type": "string", "description": "المسؤول أو المنظم" },
+        "status": { "type": "string", "enum": ["مجدول", "مكتمل", "ملغي"], "description": "حالة النشاط" },
+        "targetAudience": { "type": "string", "description": "الفئة المستهدفة" },
+        "notes": { "type": "string", "description": "ملاحظات إضافية" }
+      },
+      "required": ["title", "date", "status"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "حسابات المستخدمين والمشرفين والموظفين",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف المستخدم" },
+        "name": { "type": "string", "description": "الاسم الكامل" },
+        "username": { "type": "string", "description": "اسم المستخدم لتسجيل الدخول" },
+        "password": { "type": "string", "description": "كلمة المرور" },
+        "role": { "type": "string", "description": "الدور الوظيفي" },
+        "branch": { "type": "string", "description": "الفرع التابع له" },
+        "phone": { "type": "string", "description": "رقم الهاتف" },
+        "email": { "type": "string", "description": "البريد الإلكتروني" },
+        "active": { "type": "boolean", "description": "حالة التفعيل" },
+        "lastLogin": { "type": "string", "description": "تاريخ آخر تسجيل دخول" },
+        "avatarUrl": { "type": "string", "description": "رابط الصورة الرمزية" }
+      },
+      "required": ["name", "username", "password", "role"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "الإشعارات والتنبيهات الفورية وبث الرسائل",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف الإشعار" },
+        "title": { "type": "string", "description": "عنوان الإشعار" },
+        "body": { "type": "string", "description": "نص الإشعار" },
+        "type": { "type": "string", "enum": ["donation", "student", "announcement", "financial", "activity", "system"], "description": "نوع الإشعار" },
+        "targetTab": { "type": "string", "description": "الصفحة المستهدفة عند النقر" },
+        "date": { "type": "string", "description": "تاريخ الإشعار" },
+        "timestamp": { "type": "number", "description": "طابع زمني" },
+        "unread": { "type": "boolean", "description": "حالة القراءة" },
+        "isUrgent": { "type": "boolean", "description": "هل هو عاجل" },
+        "senderName": { "type": "string", "description": "اسم المرسل" },
+        "senderRole": { "type": "string", "description": "دور المرسل" }
+      },
+      "required": ["title", "body", "type", "timestamp"]
+    },
+    "SystemMeta": {
+      "title": "SystemMeta",
+      "description": "إعدادات النظام العامة والجداول المرجعية وأسعار الصرف",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "معرف الإعداد أو اسم الجدول المرجعي" },
+        "exchangeRate": { "type": "object", "description": "سعر صرف الدولار مقابل الليرة" },
+        "branchesRef": { "type": "array", "description": "جدول الفروع المرجعي" },
+        "gradesRef": { "type": "array", "description": "جدول الصفوف والمراحل الدراسية" },
+        "curriculumTracksRef": { "type": "array", "description": "جدول المسارات والمناهج" },
+        "donationCategoriesRef": { "type": "array", "description": "جدول تصنيفات التبرعات" },
+        "expenseItemsRef": { "type": "array", "description": "جدول بنود المصروفات" },
+        "adminUser": { "type": "object", "description": "بيانات المسؤول العام" }
+      }
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "مجموعة الطلاب المسجلين بالمركز"
+    },
+    "/circles/{circleId}": {
+      "schema": "AcademicCircle",
+      "description": "مجموعة الحلقات القرآنية"
+    },
+    "/teachers/{teacherId}": {
+      "schema": "Teacher",
+      "description": "مجموعة المعلمين والمشايخ"
+    },
+    "/donations/{donationId}": {
+      "schema": "Donation",
+      "description": "مجموعة سندات التبرعات المالية"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "FinancialTransaction",
+      "description": "مجموعة المعاملات المالية والمصروفات"
+    },
+    "/schedule/{scheduleId}": {
+      "schema": "ScheduleClass",
+      "description": "جدول الحصص الأسبوعي"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "التعاميم والإعلانات الإدارية"
+    },
+    "/activities/{activityId}": {
+      "schema": "Activity",
+      "description": "الأنشطة والفعاليات"
+    },
+    "/users/{userId}": {
+      "schema": "UserAccount",
+      "description": "حسابات المستخدمين وصلاحيات الدخول"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "مجموعة الإشعارات والتنبيهات الفورية"
+    },
+    "/meta/{metaDocId}": {
+      "schema": "SystemMeta",
+      "description": "إعدادات النظام والجداول المرجعية وأسعار الصرف"
+    }
+  }
+}

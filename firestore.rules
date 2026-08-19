@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation Helpers
+    function isValidStudent(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && (data.status in ['منتظم', 'متميز', 'تأخير متكرر', 'منقطع'])
+        && (data.branch is string && data.branch.size() > 0 && data.branch.size() <= 100);
+    }
+
+    function isValidCircle(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && (data.teacherName is string && data.teacherName.size() > 0 && data.teacherName.size() <= 100);
+    }
+
+    function isValidTeacher(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && (data.phone is string && data.phone.size() > 0 && data.phone.size() <= 50);
+    }
+
+    function isValidDonation(data) {
+      return data.donorName is string && data.donorName.size() > 0 && data.donorName.size() <= 150
+        && (data.amountUSD is number && data.amountUSD >= 0)
+        && (data.receiptNumber is string && data.receiptNumber.size() > 0 && data.receiptNumber.size() <= 50);
+    }
+
+    function isValidTransaction(data) {
+      return (data.type in ['income', 'expense'])
+        && (data.category is string && data.category.size() > 0 && data.category.size() <= 100)
+        && (data.amountUSD is number && data.amountUSD >= 0);
+    }
+
+    function isValidAnnouncement(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && (data.content is string && data.content.size() > 0 && data.content.size() <= 5000);
+    }
+
+    function isValidActivity(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && (data.status in ['مجدول', 'مكتمل', 'ملغي']);
+    }
+
+    function isValidScheduleClass(data) {
+      return data.day is string && data.day.size() > 0 && data.day.size() <= 50
+        && data.time is string && data.time.size() > 0 && data.time.size() <= 50;
+    }
+
+    function isValidUserAccount(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 150
+        && (data.username is string && data.username.size() > 0 && data.username.size() <= 100)
+        && (data.role is string && data.role.size() > 0 && data.role.size() <= 100);
+    }
+
+    function isValidNotification(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.body is string && data.body.size() > 0 && data.body.size() <= 2000
+        && (data.type in ['donation', 'student', 'announcement', 'financial', 'activity', 'system']);
+    }
+
+    function isValidMeta(data) {
+      return data.size() > 0;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection testing
+    match /test/{testId} {
+      allow read, write: if true;
+    }
+
+    // Students Collection
+    match /students/{studentId} {
+      allow read: if true;
+      allow create, update: if isValidId(studentId) && isValidStudent(incoming());
+      allow delete: if isValidId(studentId);
+    }
+
+    // Academic Circles Collection
+    match /circles/{circleId} {
+      allow read: if true;
+      allow create, update: if isValidId(circleId) && isValidCircle(incoming());
+      allow delete: if isValidId(circleId);
+    }
+
+    // Teachers Collection
+    match /teachers/{teacherId} {
+      allow read: if true;
+      allow create, update: if isValidId(teacherId) && isValidTeacher(incoming());
+      allow delete: if isValidId(teacherId);
+    }
+
+    // Donations Collection
+    match /donations/{donationId} {
+      allow read: if true;
+      allow create, update: if isValidId(donationId) && isValidDonation(incoming());
+      allow delete: if isValidId(donationId);
+    }
+
+    // Transactions Collection
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create, update: if isValidId(transactionId) && isValidTransaction(incoming());
+      allow delete: if isValidId(transactionId);
+    }
+
+    // Schedule Collection
+    match /schedule/{scheduleId} {
+      allow read: if true;
+      allow create, update: if isValidId(scheduleId) && isValidScheduleClass(incoming());
+      allow delete: if isValidId(scheduleId);
+    }
+
+    // Announcements Collection
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create, update: if isValidId(announcementId) && isValidAnnouncement(incoming());
+      allow delete: if isValidId(announcementId);
+    }
+
+    // Activities Collection
+    match /activities/{activityId} {
+      allow read: if true;
+      allow create, update: if isValidId(activityId) && isValidActivity(incoming());
+      allow delete: if isValidId(activityId);
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if isValidId(userId) && isValidUserAccount(incoming());
+      allow delete: if isValidId(userId);
+    }
+
+    // Notifications Collection
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow create, update: if isValidId(notificationId) && isValidNotification(incoming());
+      allow delete: if isValidId(notificationId);
+    }
+
+    // Meta & Reference Tables Collection
+    match /meta/{metaId} {
+      allow read: if true;
+      allow create, update: if isValidId(metaId) && isValidMeta(incoming());
+      allow delete: if isValidId(metaId);
+    }
+  }
+}
