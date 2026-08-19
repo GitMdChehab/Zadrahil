@@ -20,7 +20,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const [attendancePeriod, setAttendancePeriod] = useState<'thisWeek' | 'lastWeek'>('thisWeek');
 
-  const totalDonationsAmount = donations.reduce((acc, d) => acc + (d.amountUSD || d.amount || 0), 0);
+  const totalDonationsAmount = donations.reduce((acc, d) => acc + d.amount, 0);
   const activeStudentsCount = students.filter((s) => s.status === 'منتظم').length;
   const attendanceRate = Math.round((activeStudentsCount / (students.length || 1)) * 100);
 

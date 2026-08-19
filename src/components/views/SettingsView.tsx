@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DatabaseSchema, UserAccount } from '../../types';
 import { api } from '../../services/api';
 import { INITIAL_USERS } from '../../data/dbData';
 import { EditUserModal } from '../modals/EditUserModal';
-import { pushNotifications, playNotificationSound } from '../../services/pushNotifications';
 
 interface SettingsViewProps {
   onShowToast: (msg: string) => void;
@@ -34,42 +33,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
   const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<UserAccount | null>(null);
-
-  // Push Notification State
-  const [pushPerm, setPushPerm] = useState<NotificationPermission | 'unsupported'>('default');
-  const [pushPrefs, setPushPrefs] = useState(() => pushNotifications.getPreferences());
-
-  useEffect(() => {
-    setPushPerm(pushNotifications.getPermission());
-  }, []);
-
-  const handleRequestPushPermission = async () => {
-    const res = await pushNotifications.requestPermission();
-    setPushPerm(res);
-    if (res === 'granted') {
-      onShowToast('تم تفعيل إشعارات المتصفح الفورية بنجاح 🔔');
-      await pushNotifications.showPush('مركز زاد الرحيل', 'تم تفعيل الإشعارات الفورية بنجاح.');
-    } else if (res === 'denied') {
-      onShowToast('تم رفض إذن الإشعارات في المتصفح');
-    }
-  };
-
-  const handleUpdatePushPref = (key: keyof typeof pushPrefs, value: boolean) => {
-    const updated = pushNotifications.savePreferences({ [key]: value });
-    setPushPrefs(updated);
-    if (key === 'soundEnabled' && value) {
-      playNotificationSound();
-    }
-    onShowToast('تم تحديث تفضيلات الإشعارات الفورية');
-  };
-
-  const handleTestPushNotification = async () => {
-    await pushNotifications.showPush(
-      'اختبار الإشعارات الفورية 🔔',
-      'هذا إشعار تجريبي فوري من نظام مركز زاد الرحيل للتأكد من عمل النظام بشكل سليم.'
-    );
-    onShowToast('تم إرسال إشعار تجريبي للمتصفح');
-  };
 
   const usersList: UserAccount[] = database.users && database.users.length > 0
     ? database.users
@@ -124,18 +87,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   // User Management Handlers
-  const handleSaveUser = async (savedUser: UserAccount) => {
+  const handleSaveUser = (savedUser: UserAccount) => {
     const existingIndex = usersList.findIndex((u) => u.id === savedUser.id);
     let updatedUsers: UserAccount[];
 
     if (existingIndex >= 0) {
       updatedUsers = usersList.map((u) => (u.id === savedUser.id ? savedUser : u));
-      await api.updateUser(savedUser.id, savedUser);
-      onShowToast(`تم تحديث حساب المستخدم (${savedUser.name}) في Firebase`);
+      onShowToast(`تم تحديث حساب المستخدم (${savedUser.name}) بنجاح`);
     } else {
       updatedUsers = [savedUser, ...usersList];
-      await api.addUser(savedUser);
-      onShowToast(`تم إنشاء حساب جديد لـ (${savedUser.name}) في Firebase`);
+      onShowToast(`تم إنشاء حساب جديد لـ (${savedUser.name}) بنجاح`);
     }
 
     const updatedDb: DatabaseSchema = {
@@ -143,10 +104,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       users: updatedUsers,
     };
 
+    api.saveDatabase(updatedDb);
     onDatabaseReload(updatedDb);
   };
 
-  const handleDeleteUser = async (user: UserAccount) => {
+  const handleDeleteUser = (user: UserAccount) => {
     if (user.username === 'admin') {
       alert('لا يمكن حذف حساب المدير العام الأساسي (admin).');
       return;
@@ -159,25 +121,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         users: updatedUsers,
       };
 
-      await api.deleteUser(user.id);
+      api.saveDatabase(updatedDb);
       onDatabaseReload(updatedDb);
-      onShowToast(`تم حذف حساب (${user.name}) من Firebase`);
+      onShowToast(`تم حذف حساب (${user.name}) بنجاح`);
     }
   };
 
-  const handleToggleUserStatus = async (user: UserAccount) => {
-    const updated = { ...user, active: !user.active };
+  const handleToggleUserStatus = (user: UserAccount) => {
     const updatedUsers = usersList.map((u) =>
-      u.id === user.id ? updated : u
+      u.id === user.id ? { ...u, active: !u.active } : u
     );
     const updatedDb: DatabaseSchema = {
       ...database,
       users: updatedUsers,
     };
 
-    await api.updateUser(user.id, { active: !user.active });
+    api.saveDatabase(updatedDb);
     onDatabaseReload(updatedDb);
-    onShowToast(`تم ${!user.active ? 'تفعيل' : 'تعطيل'} حساب (${user.name}) في Firebase`);
+    onShowToast(`تم ${!user.active ? 'تفعيل' : 'تعطيل'} حساب (${user.name}) بنجاح`);
   };
 
   const togglePasswordReveal = (userId: string) => {
@@ -575,125 +536,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
         {/* Side Panel: Toggles */}
         <div className="space-y-6">
-          {/* Push Notifications Card */}
-          <div className="bg-white p-6 rounded-2xl border border-[#e1bfb5] shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#191c1e] flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#9b2f00]">notifications_active</span>
-                الإشعارات الفورية (Push)
-              </h2>
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                  pushPerm === 'granted'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : pushPerm === 'denied'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}
-              >
-                {pushPerm === 'granted' ? 'مفعل بالمتصفح' : pushPerm === 'denied' ? 'محظور' : 'غير مفعل'}
-              </span>
-            </div>
-
-            <p className="text-xs text-[#59413a]">
-              إرسال إشعارات فورية على شاشة الجهاز عند تسجيل تبرع، تنبيه طالب، أو تعميم جديد.
-            </p>
-
-            <div className="space-y-2.5 pt-1">
-              {pushPerm !== 'granted' ? (
-                <button
-                  type="button"
-                  onClick={handleRequestPushPermission}
-                  className="w-full py-2 bg-[#9b2f00] hover:bg-[#c2410c] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">cell_tower</span>
-                  <span>تفعيل إذن الإشعارات الفورية بالمتصفح</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleTestPushNotification}
-                  className="w-full py-2 bg-orange-50 hover:bg-orange-100 text-[#9b2f00] border border-orange-200 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">ring_volume</span>
-                  <span>إرسال إشعار فوري تجريبي</span>
-                </button>
-              )}
-            </div>
-
-            <div className="divide-y divide-[#e1bfb5]/40 pt-2 text-xs">
-              <label className="flex items-center justify-between py-2.5 cursor-pointer">
-                <div>
-                  <p className="font-bold text-[#191c1e]">نغمة التنبيه الصوتي 🔊</p>
-                  <p className="text-[11px] text-[#747779]">تشغيل نغمة عند وصول الإشعار</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={pushPrefs.soundEnabled}
-                  onChange={(e) => handleUpdatePushPref('soundEnabled', e.target.checked)}
-                  className="w-4 h-4 rounded text-[#9b2f00] accent-[#9b2f00]"
-                />
-              </label>
-
-              <label className="flex items-center justify-between py-2.5 cursor-pointer">
-                <div>
-                  <p className="font-bold text-[#191c1e]">إشعارات التبرعات الجديدة 💰</p>
-                  <p className="text-[11px] text-[#747779]">تنبيه فوري عند توثيق أي سند تبرع</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={pushPrefs.notifyOnDonations}
-                  onChange={(e) => handleUpdatePushPref('notifyOnDonations', e.target.checked)}
-                  className="w-4 h-4 rounded text-[#9b2f00] accent-[#9b2f00]"
-                />
-              </label>
-
-              <label className="flex items-center justify-between py-2.5 cursor-pointer">
-                <div>
-                  <p className="font-bold text-[#191c1e]">تنبيهات متابعة وغياب الطلاب ⚠️</p>
-                  <p className="text-[11px] text-[#747779]">إشعار عند تغيير حالة الطالب أو غيابه</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={pushPrefs.notifyOnStudentAlerts}
-                  onChange={(e) => handleUpdatePushPref('notifyOnStudentAlerts', e.target.checked)}
-                  className="w-4 h-4 rounded text-[#9b2f00] accent-[#9b2f00]"
-                />
-              </label>
-
-              <label className="flex items-center justify-between py-2.5 cursor-pointer">
-                <div>
-                  <p className="font-bold text-[#191c1e]">التعاميم والإعلانات الإدارية 📢</p>
-                  <p className="text-[11px] text-[#747779]">إشعار عند نشر تعميم عام أو عاجل</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={pushPrefs.notifyOnAnnouncements}
-                  onChange={(e) => handleUpdatePushPref('notifyOnAnnouncements', e.target.checked)}
-                  className="w-4 h-4 rounded text-[#9b2f00] accent-[#9b2f00]"
-                />
-              </label>
-
-              <label className="flex items-center justify-between py-2.5 cursor-pointer">
-                <div>
-                  <p className="font-bold text-[#191c1e]">القيود والتقارير المالية 📊</p>
-                  <p className="text-[11px] text-[#747779]">إشعار بالمصروفات والإيرادات اليومية</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={pushPrefs.notifyOnFinancials}
-                  onChange={(e) => handleUpdatePushPref('notifyOnFinancials', e.target.checked)}
-                  className="w-4 h-4 rounded text-[#9b2f00] accent-[#9b2f00]"
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Other Channels Toggles */}
+          {/* Notifications Toggles */}
           <div className="bg-white p-6 rounded-2xl border border-[#e1bfb5] shadow-xs space-y-4">
             <h2 className="text-base font-bold text-[#191c1e] flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#fea619]">cell_merge</span>
-              قنوات الاتصال الإضافية
+              <span className="material-symbols-outlined text-[#fea619]">notifications_active</span>
+              التنبيهات والاتصال
             </h2>
 
             <div className="space-y-3 text-xs">
@@ -725,7 +572,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
               <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#f7f9fb] cursor-pointer">
                 <div>
-                  <p className="font-bold text-[#191c1e]">التقرير المالي الأسبوعي عبر البريد</p>
+                  <p className="font-bold text-[#191c1e]">التقرير المالي الأسبوعي</p>
                   <p className="text-[11px] text-[#747779]">إرسال ملخص الصندوق للمدير العام</p>
                 </div>
                 <input
@@ -738,7 +585,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
               <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#f7f9fb] cursor-pointer">
                 <div>
-                  <p className="font-bold text-[#191c1e]">النسخ الاحتياطي التلقائي</p>
+                  <p className="font-bold text-[#191c1e]">النسخ الاحتياطي التلقائي لـ db.json</p>
                   <p className="text-[11px] text-[#747779]">مزامنة دورية وتحديث السجلات</p>
                 </div>
                 <input

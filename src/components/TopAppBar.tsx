@@ -39,7 +39,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
 
   return (
     <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-[#e1bfb5] px-4 md:px-8 py-3 flex items-center justify-between shadow-xs">
-      {/* Right side (RTL Start): Mobile Menu, Search, and Firebase Live indicator */}
+      {/* Right side (RTL Start): Mobile Menu & Search */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           onClick={onToggleMobileSidebar}
@@ -74,15 +74,6 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({
               </button>
             )}
           </div>
-        </div>
-
-        {/* Live Firebase badge */}
-        <div
-          title="قاعدة بيانات Firebase متصلة ومزامنة في الوقت الفعلي"
-          className="hidden lg:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-[11px] font-bold shrink-0 shadow-2xs"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span>Firebase متصل</span>
         </div>
       </div>
 

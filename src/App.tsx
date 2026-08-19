@@ -25,7 +25,6 @@ import {
   INITIAL_USERS,
 } from './data/dbData';
 import { api } from './services/api';
-import { pushNotifications } from './services/pushNotifications';
 import { Sidebar } from './components/Sidebar';
 import { TopAppBar } from './components/TopAppBar';
 import { DashboardView } from './components/views/DashboardView';
@@ -90,7 +89,7 @@ export function App() {
 
   // Database schema state
   const [database, setDatabase] = useState<DatabaseSchema>(FULL_INITIAL_DATABASE);
-  const [, setIsLoadingDb] = useState<boolean>(true);
+  const [isLoadingDb, setIsLoadingDb] = useState<boolean>(true);
 
   // Print Center state
   const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false);
@@ -118,34 +117,33 @@ export function App() {
   const announcements = database.announcements || INITIAL_ANNOUNCEMENTS;
   const currentExchangeRate = database.exchangeRate?.usdToLbp || 89500;
 
-  // Initial load and Real-time listener for Firebase Firestore
+  // Initial load from backend API (reading db.json)
   useEffect(() => {
     async function loadData() {
       setIsLoadingDb(true);
       try {
         const loaded = await api.getDatabase();
         if (loaded && loaded.students && loaded.students.length > 0) {
-          setDatabase(loaded);
+          const merged: DatabaseSchema = {
+            ...FULL_INITIAL_DATABASE,
+            ...loaded,
+            users: (loaded.users && loaded.users.length > 0) ? loaded.users : FULL_INITIAL_DATABASE.users,
+            exchangeRate: loaded.exchangeRate || FULL_INITIAL_DATABASE.exchangeRate,
+            branchesRef: loaded.branchesRef || FULL_INITIAL_DATABASE.branchesRef,
+            gradesRef: loaded.gradesRef || FULL_INITIAL_DATABASE.gradesRef,
+            curriculumTracksRef: loaded.curriculumTracksRef || FULL_INITIAL_DATABASE.curriculumTracksRef,
+            donationCategoriesRef: loaded.donationCategoriesRef || FULL_INITIAL_DATABASE.donationCategoriesRef,
+            expenseItemsRef: loaded.expenseItemsRef || FULL_INITIAL_DATABASE.expenseItemsRef,
+          };
+          setDatabase(merged);
         }
       } catch (err) {
-        console.error('Failed to load database from Firebase Firestore:', err);
+        console.error('Failed to load database from db.json API:', err);
       } finally {
         setIsLoadingDb(false);
       }
     }
     loadData();
-
-    // Subscribe to live changes in Firebase Firestore
-    const unsubscribe = api.subscribeToDatabase((updatedDb) => {
-      setDatabase((prev) => ({
-        ...prev,
-        ...updatedDb,
-      }));
-    });
-
-    return () => {
-      unsubscribe();
-    };
   }, []);
 
   // Modals visibility
@@ -182,11 +180,10 @@ export function App() {
     showToast('تم تسجيل الخروج بنجاح');
   };
 
-  const handleUpdateCurrentUser = async (updated: UserAccount) => {
+  const handleUpdateCurrentUser = (updated: UserAccount) => {
     setCurrentUser(updated);
     localStorage.setItem('zad_current_user', JSON.stringify(updated));
-    await api.updateUser(updated.id, updated);
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       users: (prev.users || INITIAL_USERS).map((u) => (u.id === updated.id ? updated : u)),
     }));
@@ -199,7 +196,7 @@ export function App() {
       id: `st-${Date.now()}`,
     };
 
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       students: [created, ...prev.students],
       circles: prev.circles.map((c) =>
@@ -207,26 +204,26 @@ export function App() {
       ),
     }));
 
-    await api.addStudent(created);
-    showToast(`تمت إضافة الطالب "${created.name}" بنجاح وحفظه في Firebase Firestore`);
+    api.addStudent(created);
+    showToast(`تمت إضافة الطالب "${created.name}" بنجاح وحفظه في db.json`);
   };
 
-  const handleDeleteStudent = async (studentId: string) => {
-    setDatabase((prev) => ({
+  const handleDeleteStudent = (studentId: string) => {
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       students: prev.students.filter((s) => s.id !== studentId),
     }));
-    await api.deleteStudent(studentId);
-    showToast('تم حذف قيد الطالب بنجاح من Firebase Firestore');
+    api.deleteStudent(studentId);
+    showToast('تم حذف قيد الطالب بنجاح من db.json');
   };
 
-  const handleUpdateStudent = async (studentId: string, updates: Partial<Student>) => {
-    setDatabase((prev) => ({
+  const handleUpdateStudent = (studentId: string, updates: Partial<Student>) => {
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       students: prev.students.map((s) => (s.id === studentId ? { ...s, ...updates } : s)),
     }));
-    await api.updateStudent(studentId, updates);
-    showToast('تم تحديث بيانات الطالب وحفظها في Firebase Firestore');
+    api.updateStudent(studentId, updates);
+    showToast('تم تحديث بيانات الطالب وحفظها في db.json');
   };
 
   const handleUpdateStudentStatus = (
@@ -234,92 +231,85 @@ export function App() {
     status: 'منتظم' | 'متميز' | 'تأخير متكرر' | 'منقطع'
   ) => {
     handleUpdateStudent(studentId, { status });
-    const targetStudent = students.find((s) => s.id === studentId);
-    if (targetStudent) {
-      pushNotifications.notifyStudentAlert(targetStudent.name, targetStudent.circleName, status);
-    }
   };
 
-  const handleAddDonation = async (newDonation: Omit<Donation, 'id'>) => {
+  const handleAddDonation = (newDonation: Omit<Donation, 'id'>) => {
     const created: Donation = {
       ...newDonation,
       id: `don-${Date.now()}`,
     };
 
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       donations: [created, ...prev.donations],
     }));
-    await api.addDonation(created);
-    await pushNotifications.notifyNewDonation(created.donorName, created.amountUSD, created.receiptNumber);
-    showToast(`تم توثيق التبرع بقيمة $${created.amountUSD} وسند ${created.receiptNumber} في Firebase`);
+    api.addDonation(created);
+    showToast(`تم توثيق التبرع بقيمة $${created.amountUSD} وسند ${created.receiptNumber}`);
   };
 
-  const handleAddTransaction = async (newTx: Omit<FinancialTransaction, 'id'>) => {
+  const handleAddTransaction = (newTx: Omit<FinancialTransaction, 'id'>) => {
     const created: FinancialTransaction = {
       ...newTx,
       id: `tx-${Date.now()}`,
     };
 
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       transactions: [created, ...prev.transactions],
     }));
-    await api.addTransaction(created);
-    await pushNotifications.notifyFinancialTransaction(created.description, created.amountUSD, created.type);
-    showToast(`تم تسجيل المعاملة المالية (${created.description}) في Firebase`);
+    api.addTransaction(created);
+    showToast(`تم تسجيل المعاملة المالية (${created.description})`);
   };
 
-  const handleAddCircle = async (newCircle: Omit<AcademicCircle, 'id'>) => {
+  const handleAddCircle = (newCircle: Omit<AcademicCircle, 'id'>) => {
     const created: AcademicCircle = {
       ...newCircle,
       id: `cir-${Date.now()}`,
     };
 
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       circles: [created, ...prev.circles],
     }));
-    await api.addCircle(created);
-    showToast(`تم إنشاء حلقة "${created.name}" بنجاح في Firebase Firestore`);
+    api.addCircle(created);
+    showToast(`تم إنشاء حلقة "${created.name}" بنجاح في db.json`);
   };
 
-  const handleAddActivity = async (newActivity: Omit<Activity, 'id'>) => {
+  const handleAddActivity = (newActivity: Omit<Activity, 'id'>) => {
     const created: Activity = {
       ...newActivity,
       id: `act-${Date.now()}`,
     };
 
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       activities: [created, ...prev.activities],
     }));
-    await api.addActivity(created);
-    showToast(`تمت جدولة النشاط "${created.title}" بنجاح في Firebase`);
+    api.addActivity(created);
+    showToast(`تمت جدولة النشاط "${created.title}" بنجاح`);
   };
 
-  const handleAddAnnouncement = async (newAnn: Omit<Announcement, 'id'>) => {
+  const handleAddAnnouncement = (newAnn: Omit<Announcement, 'id'>) => {
     const created: Announcement = {
       ...newAnn,
       id: `ann-${Date.now()}`,
     };
 
-    setDatabase((prev) => ({
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       announcements: [created, ...prev.announcements],
     }));
-    await api.addAnnouncement(created);
-    await pushNotifications.notifyAnnouncement(created.title, created.author, created.isUrgent);
-    showToast('تم نشر التعميم الإداري في Firebase Firestore وبث إشعار فوري');
+    api.addAnnouncement(created);
+    showToast('تم نشر التعميم الإداري في db.json');
   };
 
-  const handleDeleteAnnouncement = async (annId: string) => {
-    setDatabase((prev) => ({
+  const handleDeleteAnnouncement = (annId: string) => {
+    updateAndSaveDatabase((prev) => ({
       ...prev,
       announcements: prev.announcements.filter((a) => a.id !== annId),
     }));
-    await api.deleteAnnouncement(annId);
-    showToast('تم حذف التعميم بنجاح من Firebase');
+    api.deleteAnnouncement(annId);
+    showToast('تم حذف التعميم بنجاح');
   };
 
   const handleUpdateAdminUser = (updatedUser: AdminUser) => {
@@ -344,7 +334,7 @@ export function App() {
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 left-6 z-50 bg-[#191c1e] text-white px-5 py-3 rounded-2xl shadow-xl border border-white/10 flex items-center gap-3 animate-in slide-in-from-bottom-5">
-          <span className="material-symbols-outlined text-[#fea619] text-[20px]">cloud_done</span>
+          <span className="material-symbols-outlined text-[#fea619] text-[20px]">database</span>
           <span className="text-xs font-semibold">{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
@@ -379,7 +369,7 @@ export function App() {
           onOpenHelp={() => setIsHelpOpen(true)}
           onOpenPrintModal={() => handleOpenPrintModal('student_roster')}
           onLogout={handleLogout}
-          unreadCount={(database.notifications || []).filter((n) => n.unread).length}
+          unreadCount={3}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
         />
@@ -561,9 +551,6 @@ export function App() {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
         onNavigateToTab={setActiveTab}
-        notifications={database.notifications || []}
-        currentUser={currentUser}
-        onShowToast={showToast}
       />
 
       {/* Print Center Modal */}

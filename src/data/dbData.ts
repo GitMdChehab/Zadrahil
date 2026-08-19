@@ -16,7 +16,6 @@ import {
   Student,
   Teacher,
   UserAccount,
-  NotificationItem,
 } from '../types';
 
 export const BRANCHES: CenterBranch[] = [
@@ -1528,58 +1527,6 @@ export const INITIAL_USERS: UserAccount[] = [
   },
 ];
 
-export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    title: 'تبرع جديد مسجل 💰',
-    body: 'تم استلام وتوثيق تبرع بقيمة $500 من فاعل خير لحساب كفالة الحلقات وسند REC-2024-001',
-    type: 'donation',
-    targetTab: 'donations',
-    date: '2026-08-19',
-    timestamp: Date.now() - 1000 * 60 * 15,
-    unread: true,
-    senderName: 'أمين الصندوق',
-    senderRole: 'الإدارة المالية',
-  },
-  {
-    id: 'notif-2',
-    title: 'تنبيه متابعة طالب ⚠️',
-    body: 'سجل الطالب "عمر خالد صالح" تأخيراً في حلقة الإمام مالك - فرع مصيلح',
-    type: 'student',
-    targetTab: 'persons',
-    date: '2026-08-19',
-    timestamp: Date.now() - 1000 * 60 * 60 * 2,
-    unread: true,
-    isUrgent: true,
-    senderName: 'الشيخ إبراهيم ناصر',
-    senderRole: 'مشرف تعليمي',
-  },
-  {
-    id: 'notif-3',
-    title: 'تعميم إداري هام 📢',
-    body: 'بدء التسجيل في مسابقة حفظ القرآن الكريم السنوية لكافة الفروع',
-    type: 'announcement',
-    targetTab: 'announcements',
-    date: '2026-08-18',
-    timestamp: Date.now() - 1000 * 60 * 60 * 6,
-    unread: true,
-    senderName: 'الإدارة العامة',
-    senderRole: 'المدير العام',
-  },
-  {
-    id: 'notif-4',
-    title: 'اعتماد التقرير المالي الأسبوعي 📊',
-    body: 'تمت مطابقة إيرادات ومصروفات الأسبوع الماضي وتسوية سندات القبض مع الصندوق',
-    type: 'financial',
-    targetTab: 'financials',
-    date: '2026-08-18',
-    timestamp: Date.now() - 1000 * 60 * 60 * 24,
-    unread: false,
-    senderName: 'قسم المحاسبة',
-    senderRole: 'أمين الصندوق',
-  },
-];
-
 export const FULL_INITIAL_DATABASE: DatabaseSchema = {
   meta: {
     name: 'مركز زاد الرحيل لتعليم وتدريب القرآن الكريم',
@@ -1610,6 +1557,5 @@ export const FULL_INITIAL_DATABASE: DatabaseSchema = {
   scheduleClasses: INITIAL_SCHEDULE,
   announcements: INITIAL_ANNOUNCEMENTS,
   users: INITIAL_USERS,
-  notifications: INITIAL_NOTIFICATIONS,
 };
 
