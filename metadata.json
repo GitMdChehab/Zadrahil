@@ -1,0 +1,6 @@
+{
+  "name": "Zad Al-Raheel Center",
+  "description": "نظام إدارة مركز زاد الرحيل لتعليم وتدريب القرآن الكريم والعلوم الشرعية والأنشطة الإدارية والمالية والأكاديمية",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

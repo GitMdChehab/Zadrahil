@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Amber shadow and subtle borders */
+.amber-card-shadow {
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.05);
+}
+
+.amber-card-shadow-hover:hover {
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.1);
+}
+
+.accent-strip-gold {
+  border-top: 4px solid #fea619;
+}
+
+.accent-strip-orange {
+  border-top: 4px solid #9b2f00;
+}
+
+.accent-strip-primary {
+  border-top: 4px solid #c2410c;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f2f4f6;
+}
+::-webkit-scrollbar-thumb {
+  background: #e0e3e5;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d8dadc;
+}
+
+/* ============================================================
+   PRINT STYLES (@media print)
+   Optimized for high-contrast crisp official certificates & reports
+   ============================================================ */
+@media print {
+  /* Hide non-printable elements */
+  aside,
+  header,
+  nav,
+  button,
+  .no-print,
+  .sidebar,
+  .top-app-bar,
+  .modal-backdrop,
+  input,
+  select,
+  textarea {
+    display: none !important;
+  }
+
+  /* Reset body and container styles for print */
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .printable-document {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 15mm !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-inside: avoid;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 10pt !important;
+    margin-bottom: 10pt !important;
+  }
+
+  th, td {
+    border: 1px solid #333333 !important;
+    padding: 6pt 8pt !important;
+    font-size: 9.5pt !important;
+    color: #000000 !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  .page-break {
+    page-break-before: always !important;
+  }
+
+  /* Watermark or Stamp in print */
+  .print-stamp {
+    border: 2px solid #855300 !important;
+    color: #855300 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
